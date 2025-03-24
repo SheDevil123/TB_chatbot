@@ -160,7 +160,7 @@ latest_user_input:{user_input}"""#st.session_state.chat_history[-1] if st.sessio
 
         #its a casual question 
         else:
-            bot_response=llm.invoke(f"""system:you are a chatbot that specilizes in medical questions related to animal bites
+            bot_response=llm.invoke(f"""system:you are a chatbot that specilizes in medical questions related to Tuberculosis
                                     question: {user_input}""").content
 
         #bot_response = "This is bot response."
