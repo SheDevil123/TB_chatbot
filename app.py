@@ -14,7 +14,7 @@ import smtplib
 print(dotenv.load_dotenv())
 
 from_email = "animalbiteschatbot@gmail.com"
-to_email="pandasrit5@gmail.com"
+to_email="someone0something0somewhere0@gmail.com"
 password = os.environ["APP_PASSWORD"]
 
 tagging_prompt = ChatPromptTemplate.from_template(
@@ -38,14 +38,24 @@ Return only the category name: 'Casual Greeting' or 'Subject-Specific'.""",
     )
 
 #for checking if it is related to
+# class related_not(BaseModel):
+#     description: str = Field(
+#         description="""Determine whether the given user query is related to animal bites.
+# Categories:
+# Animal Bite-Related - If the query mentions animal bites, their effects, treatment, prevention, or specific cases (e.g., 'What to do after a dog bite?', 'Are cat bites dangerous?').
+# Not Animal Bite-Related - If the query does not pertain to animal bites.
+# Return only the category name: 'Animal Bite-Related' or 'Not Animal Bite-Related'.""",
+#     enum=['Animal Bite-Related','Not Animal Bite-Related']
+#     )
+
 class related_not(BaseModel):
     description: str = Field(
-        description="""Determine whether the given user query is related to animal bites.
-Categories:
-Animal Bite-Related - If the query mentions animal bites, their effects, treatment, prevention, or specific cases (e.g., 'What to do after a dog bite?', 'Are cat bites dangerous?').
-Not Animal Bite-Related - If the query does not pertain to animal bites.
-Return only the category name: 'Animal Bite-Related' or 'Not Animal Bite-Related'.""",
-    enum=['Animal Bite-Related','Not Animal Bite-Related']
+        description="""Determine whether the given user query is related to tuberculosis (TB).  
+Categories:  
+TB-Related - If the query mentions tuberculosis, its symptoms, diagnosis, treatment, prevention, transmission, or specific cases (e.g., 'What are the symptoms of TB?', 'How is tuberculosis transmitted?').  
+Not TB-Related - If the query does not pertain to tuberculosis.  
+Return only the category name: 'TB-Related' or 'Not TB-Related'.""",
+    enum=['TB-Related', 'Not TB-Related']
     )
 
 #chat bot stuff 
@@ -57,7 +67,7 @@ larger_llm=ChatOpenAI(temperature=0, model="gpt-4o",api_key=os.environ["OPENAI_K
 #mongodb initialization
 client = MongoClient(os.getenv("MONGODB_URI"))
 db=client["pdf_file"]
-collection=db["animal_bites"]
+collection=db["TB_stuff"]
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
@@ -105,25 +115,25 @@ latest_user_input:{user_input}"""#st.session_state.chat_history[-1] if st.sessio
                 db_embedding=i["embeddings"]
                 val=cosine_similarity([db_embedding],[embedding])[0][0]
                 print(round(val,2))
-                if round(val,2)>=0.44:
+                if round(val,2)>=0.55:
                     context=context+i["raw_data"]+"\n\n"
             print(len(context))
 
             #if context is available 
             if context:
-                prompt_template=f"""you are a chatbot meant to answer questions related to animal bites, answer the question based on the given context. 
-                context:{context}
-                question:{modified_user_input}"""
+                prompt_template= f"""You are a chatbot meant to answer questions related to tuberculosis (TB). Answer the question based on the given context.  
+                Context: {context}  
+                Question: {modified_user_input}""" 
                 response=llm.invoke(prompt_template)
                 bot_response=response.content
             #context is not available 
             else:
                 prompt = tagging_prompt.invoke({"input": modified_user_input})
                 response = smaller_llm.with_structured_output(related_not).invoke(prompt)
-                if response.model_dump()["description"]=='Not Animal Bite-Related':
-                    bot_response="Sorry, but I specialize in answering questions related to animal bites.\
-                            I may not be able to help with your query, but if you have any questions about animal bites, \
-                            their effects, treatment, or prevention, I'd be happy to assist!"
+                if response.model_dump()["description"]=='Not TB-Related':
+                    bot_response="Sorry, but I specialize in answering questions related to tuberculosis (TB).\
+                        I may not be able to help with your query, but if you have any questions about TB,\
+                        its symptoms, treatment, prevention, or transmission, I'd be happy to assist!"
                 else:
                     # Create the email message
                     message = f"Subject: \n\n{modified_user_input}"
@@ -164,7 +174,7 @@ def display_chat():
         message(bot_msg, key=f"bot_msg_{i}")
 
 def main():
-    st.title("Chatbot for Animal Bites")
+    st.title("Chatbot for Tuberculosis")
 
     # Chat display container
     chat_container = st.container()
